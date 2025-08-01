@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubik's Cube Solver - Collins Aerospace Hackathon 2025</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎯 Advanced Rubik's Cube Solver</h1>
+            <p>Collins Aerospace Hackathon 2025 - Multi-Algorithm Solution</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- 3D Cube Visualization -->
+            <section class="cube-section">
+                <div class="section-header">
+                    <h2>3D Cube Visualization</h2>
+                    <div class="view-controls">
+                        <button class="btn-icon" onclick="app.rotateView('x')">↻ X</button>
+                        <button class="btn-icon" onclick="app.rotateView('y')">↻ Y</button>
+                        <button class="btn-icon" onclick="app.resetView()">⟲ Reset</button>
+                    </div>
+                </div>
+                
+                <div class="cube-container" id="cubeContainer">
+                    <div class="cube" id="cube3d">
+                        <div class="face front" data-face="F"></div>
+                        <div class="face back" data-face="B"></div>
+                        <div class="face right" data-face="R"></div>
+                        <div class="face left" data-face="L"></div>
+                        <div class="face top" data-face="U"></div>
+                        <div class="face bottom" data-face="D"></div>
+                    </div>
+                </div>
+
+                <!-- Manual Controls -->
+                <div class="move-controls">
+                    <h3>Manual Controls</h3>
+                    <div class="move-grid">
+                        <button class="move-btn" onclick="app.executeMove('U')">U</button>
+                        <button class="move-btn" onclick="app.executeMove('U\'')">U'</button>
+                        <button class="move-btn" onclick="app.executeMove('U2')">U2</button>
+                        <button class="move-btn" onclick="app.executeMove('D')">D</button>
+                        <button class="move-btn" onclick="app.executeMove('D\'')">D'</button>
+                        <button class="move-btn" onclick="app.executeMove('D2')">D2</button>
+                        <button class="move-btn" onclick="app.executeMove('R')">R</button>
+                        <button class="move-btn" onclick="app.executeMove('R\'')">R'</button>
+                        <button class="move-btn" onclick="app.executeMove('R2')">R2</button>
+                        <button class="move-btn" onclick="app.executeMove('L')">L</button>
+                        <button class="move-btn" onclick="app.executeMove('L\'')">L'</button>
+                        <button class="move-btn" onclick="app.executeMove('L2')">L2</button>
+                        <button class="move-btn" onclick="app.executeMove('F')">F</button>
+                        <button class="move-btn" onclick="app.executeMove('F\'')">F'</button>
+                        <button class="move-btn" onclick="app.executeMove('F2')">F2</button>
+                        <button class="move-btn" onclick="app.executeMove('B')">B</button>
+                        <button class="move-btn" onclick="app.executeMove('B\'')">B'</button>
+                        <button class="move-btn" onclick="app.executeMove('B2')">B2</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Control Panel -->
+            <section class="control-section">
+                <!-- Algorithm Selection -->
+                <div class="algorithm-selector">
+                    <h3>Select Solving Algorithm</h3>
+                    <div class="algorithm-cards" id="algorithmCards">
+                        <!-- Dynamically loaded -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="app.scrambleCube()">
+                        <span class="icon">🎲</span> Scramble Cube
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.resetCube()">
+                        <span class="icon">🔄</span> Reset Cube
+                    </button>
+                    <button class="btn btn-primary" onclick="app.solveCube()">
+                        <span class="icon">🚀</span> SOLVE CUBE
+                    </button>
+                </div>
+
+                <!-- Statistics -->
+                <div class="stats-panel">
+                    <h3>Performance Metrics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Moves</div>
+                            <div class="stat-value" id="statMoves">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Solve Time</div>
+                            <div class="stat-value" id="statTime">0ms</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Algorithm</div>
+                            <div class="stat-value" id="statAlgorithm">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Status</div>
+                            <div class="stat-value" id="statStatus">Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Solution Display -->
+                <div class="solution-panel">
+                    <h3>Solution Breakdown</h3>
+                    <div class="solution-content" id="solutionContent">
+                        <p class="placeholder">Execute a solve to see the solution steps...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Speed Control -->
+        <div class="speed-control">
+            <label>Animation Speed:</label>
+            <input type="range" id="speedSlider" min="50" max="1000" value="300">
+            <span id="speedValue">300ms</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/cube.js"></script>
+    <script src="js/solver.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
