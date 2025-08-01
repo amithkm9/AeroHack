@@ -342,6 +342,9 @@ class RubiksCubeApp {
         cubeElement.classList.add('solving');
         
         try {
+            // Get the current state before solving
+            const initialState = JSON.parse(JSON.stringify(this.cube.state));
+            
             const response = await fetch(`${this.apiUrl}/cube/solve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -362,23 +365,59 @@ class RubiksCubeApp {
             console.log('✅ Solution found:', data.solution);
             console.log(`📊 Stats: ${data.move_count} moves, ${Math.round(data.solve_time)}ms`);
             
-            // Display solution first
+            // Display solution info immediately
             this.displaySolution(data);
-            
-            // Don't animate if already solved
-            if (data.solution && data.solution.length > 0) {
-                // Just update to final state without animation for now
-                this.cube.setState(data.final_state);
-                this.updateVisualization();
-            }
             
             // Update statistics
             document.getElementById('statMoves').textContent = data.move_count;
             document.getElementById('statTime').textContent = `${Math.round(data.solve_time)}ms`;
+            document.getElementById('statAlgorithm').textContent = data.algorithm || 'Layer-by-Layer';
             
-            if (data.is_solved) {
+            // Animate the solution if there are moves
+            if (data.solution && data.solution.length > 0) {
+                this.updateStatus('Animating...', 'warning');
+                
+                // Reset to initial state for animation
+                this.cube.setState(initialState);
+                this.updateVisualization();
+                
+                // Wait a moment before starting animation
+                await this.sleep(500);
+                
+                // Animate each move
+                for (let i = 0; i < data.solution.length; i++) {
+                    const move = data.solution[i];
+                    
+                    // Execute move
+                    this.cube.executeMove(move);
+                    this.updateVisualization();
+                    
+                    // Highlight current move in solution display
+                    this.highlightCurrentMove(i);
+                    
+                    // Update progress
+                    this.updateStatus(`Move ${i + 1}/${data.solution.length}`, 'warning');
+                    
+                    // Wait for animation
+                    await this.sleep(this.animationSpeed);
+                }
+                
+                // Clear move highlighting
+                this.clearMoveHighlight();
+            }
+            
+            // Verify final state matches
+            if (data.final_state) {
+                this.cube.setState(data.final_state);
+                this.updateVisualization();
+            }
+            
+            if (data.is_solved || this.cube.isSolved()) {
                 this.updateStatus('Solved!', 'success');
                 this.showNotification('🎉 Cube solved successfully!', 'success');
+                
+                // Add celebration effect
+                this.celebrateSolution();
             } else {
                 this.updateStatus('Incomplete', 'warning');
                 this.showNotification('⚠️ Solution may be incomplete. Try again.', 'warning');
@@ -398,6 +437,32 @@ class RubiksCubeApp {
             this.isAnimating = false;
             cubeElement.classList.remove('solving');
         }
+    }
+    
+    highlightCurrentMove(index) {
+        // Remove all highlights
+        const moveTags = document.querySelectorAll('.move-tag');
+        moveTags.forEach(tag => tag.classList.remove('current-move'));
+        
+        // Add highlight to current move
+        if (moveTags[index]) {
+            moveTags[index].classList.add('current-move');
+            moveTags[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    
+    clearMoveHighlight() {
+        const moveTags = document.querySelectorAll('.move-tag');
+        moveTags.forEach(tag => tag.classList.remove('current-move'));
+    }
+    
+    celebrateSolution() {
+        const cubeElement = document.getElementById('cube3d');
+        cubeElement.classList.add('celebrate');
+        
+        setTimeout(() => {
+            cubeElement.classList.remove('celebrate');
+        }, 2000);
     }
     
     displayScramble(scrambleMoves) {
