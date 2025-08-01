@@ -14,20 +14,30 @@ from solvers.kociemba import KociembaSolver
 from solvers.beginner_method import BeginnerMethodSolver
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+# Enable CORS with specific settings
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Store active sessions (in production, use Redis or database)
 sessions = {}
+
+@app.route('/')
+def home():
+    """Root endpoint"""
+    return jsonify({"message": "Rubik's Cube Solver API", "status": "running"})
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy", "message": "Rubik's Cube Solver API is running!"})
 
-@app.route('/api/cube/new', methods=['POST'])
+@app.route('/api/cube/new', methods=['POST', 'OPTIONS'])
 def create_new_cube():
     """Create a new cube instance"""
-    session_id = request.json.get('session_id', 'default')
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    data = request.get_json() or {}
+    session_id = data.get('session_id', 'default')
     sessions[session_id] = Cube()
     
     return jsonify({
@@ -36,11 +46,15 @@ def create_new_cube():
         "is_solved": sessions[session_id].is_solved()
     })
 
-@app.route('/api/cube/scramble', methods=['POST'])
+@app.route('/api/cube/scramble', methods=['POST', 'OPTIONS'])
 def scramble_cube():
     """Scramble the cube with random moves"""
-    session_id = request.json.get('session_id', 'default')
-    num_moves = request.json.get('num_moves', 25)
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    data = request.get_json() or {}
+    session_id = data.get('session_id', 'default')
+    num_moves = data.get('num_moves', 25)
     
     if session_id not in sessions:
         sessions[session_id] = Cube()
@@ -53,11 +67,15 @@ def scramble_cube():
         "is_solved": sessions[session_id].is_solved()
     })
 
-@app.route('/api/cube/move', methods=['POST'])
+@app.route('/api/cube/move', methods=['POST', 'OPTIONS'])
 def execute_move():
     """Execute a single move on the cube"""
-    session_id = request.json.get('session_id', 'default')
-    move = request.json.get('move')
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    data = request.get_json() or {}
+    session_id = data.get('session_id', 'default')
+    move = data.get('move')
     
     if session_id not in sessions:
         sessions[session_id] = Cube()
@@ -72,11 +90,15 @@ def execute_move():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
 
-@app.route('/api/cube/solve', methods=['POST'])
+@app.route('/api/cube/solve', methods=['POST', 'OPTIONS'])
 def solve_cube():
     """Solve the cube using specified method"""
-    session_id = request.json.get('session_id', 'default')
-    method = request.json.get('method', 'layer_by_layer')
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    data = request.get_json() or {}
+    session_id = data.get('session_id', 'default')
+    method = data.get('method', 'layer_by_layer')
     
     if session_id not in sessions:
         return jsonify({"error": "No cube found for this session"}), 404
@@ -118,9 +140,12 @@ def solve_cube():
             "method": method
         }), 500
 
-@app.route('/api/cube/state', methods=['GET'])
+@app.route('/api/cube/state', methods=['GET', 'OPTIONS'])
 def get_cube_state():
     """Get current cube state"""
+    if request.method == 'OPTIONS':
+        return '', 204
+        
     session_id = request.args.get('session_id', 'default')
     
     if session_id not in sessions:
@@ -132,10 +157,14 @@ def get_cube_state():
         "move_history": sessions[session_id].get_move_history()
     })
 
-@app.route('/api/cube/reset', methods=['POST'])
+@app.route('/api/cube/reset', methods=['POST', 'OPTIONS'])
 def reset_cube():
     """Reset cube to solved state"""
-    session_id = request.json.get('session_id', 'default')
+    if request.method == 'OPTIONS':
+        return '', 204
+        
+    data = request.get_json() or {}
+    session_id = data.get('session_id', 'default')
     
     if session_id not in sessions:
         sessions[session_id] = Cube()
@@ -147,9 +176,12 @@ def reset_cube():
         "is_solved": True
     })
 
-@app.route('/api/algorithms', methods=['GET'])
+@app.route('/api/algorithms', methods=['GET', 'OPTIONS'])
 def get_algorithms():
     """Get list of available solving algorithms"""
+    if request.method == 'OPTIONS':
+        return '', 204
+        
     return jsonify({
         "algorithms": [
             {
@@ -176,5 +208,16 @@ def get_algorithms():
         ]
     })
 
+@app.after_request
+def after_request(response):
+    """Handle CORS headers"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    print("Starting Rubik's Cube Solver API...")
+    print("Server running at http://localhost:5001")
+    print("API endpoints available at http://localhost:5001/api/")
+    app.run(debug=True, host='0.0.0.0', port=5001)

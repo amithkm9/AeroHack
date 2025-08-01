@@ -2,7 +2,7 @@
 
 class RubiksCubeApp {
     constructor() {
-        this.apiUrl = 'http://localhost:5000/api';
+        this.apiUrl = 'http://localhost:5001/api';
         this.sessionId = this.generateSessionId();
         this.cube = new Cube();
         this.visualization = new CubeVisualization('cube3d');
