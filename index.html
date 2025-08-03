@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rubik's Cube Solver - Optimized Algorithm</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #00ffcc;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+
+        h3 {
+            color: #00ffcc;
+            margin: 20px 0 15px 0;
+            font-size: 20px;
+        }
+
+        /* 3D Cube Styles */
+        .cube-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 450px;
+            perspective: 1000px;
+            margin: 20px 0;
+        }
+
+        .cube {
+            width: 220px;
+            height: 220px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-25deg) rotateY(45deg);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: grab;
+        }
+
+        .cube.solving {
+            animation: solving 2s ease-in-out infinite;
+        }
+
+        @keyframes solving {
+            0%, 100% { transform: scale(1) rotateX(-25deg) rotateY(45deg); }
+            50% { transform: scale(1.05) rotateX(-25deg) rotateY(405deg); }
+        }
+
+        .face {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+            padding: 3px;
+            background: #0a0a0a;
+            border: 2px solid #000;
+            border-radius: 5px;
+        }
+
+        .sticker {
+            background: #333;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sticker::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .sticker:hover::after {
+            opacity: 1;
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+
+        .sticker.W { background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .sticker.Y { background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+        .sticker.R { background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+        .sticker.O { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+        .sticker.G { background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+        .sticker.B { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+
+        .face.front { transform: translateZ(110px); }
+        .face.back { transform: rotateY(180deg) translateZ(110px); }
+        .face.right { transform: rotateY(90deg) translateZ(110px); }
+        .face.left { transform: rotateY(-90deg) translateZ(110px); }
+        .face.top { transform: rotateX(90deg) translateZ(110px); }
+        .face.bottom { transform: rotateX(-90deg) translateZ(110px); }
+
+        /* Controls */
+        .view-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn-icon {
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            color: #00ffcc;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-icon:hover {
+            background: rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 204, 0.3);
+        }
+
+        .manual-controls {
+            margin-top: 30px;
+        }
+
+        .move-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .move-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .move-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 255, 204, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .move-btn:hover::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .move-btn:hover {
+            background: rgba(0, 255, 204, 0.1);
+            border-color: #00ffcc;
+            color: #00ffcc;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 204, 0.3);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px 30px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #00ffcc;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 255, 204, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ffcc 0%, #00c896 100%);
+            color: #0a0a0a;
+            font-size: 18px;
+            box-shadow: 0 5px 20px rgba(0, 255, 204, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 255, 204, 0.6);
+        }
+
+        .btn-primary:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 204, 0.1);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(0, 255, 204, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            color: #00ffcc;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+
+        /* Solution Display */
+        .solution-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 255, 204, 0.1);
+        }
+
+        .solution-content {
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .phase-header {
+            color: #00ffcc;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            padding: 10px;
+            background: rgba(0, 255, 204, 0.1);
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .moves-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .move-tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .move-tag.current {
+            background: #00ffcc;
+            color: #0a0a0a;
+            font-weight: bold;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+        }
+
+        /* Algorithm info */
+        .algorithm-info {
+            background: rgba(0, 255, 204, 0.05);
+            border: 2px solid rgba(0, 255, 204, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .algorithm-info h4 {
+            color: #00ffcc;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .algorithm-info ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .algorithm-info li {
+            padding: 8px 0;
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .algorithm-info li::before {
+            content: '▸';
+            color: #00ffcc;
+            position: absolute;
+            left: 0;
+            font-size: 18px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #00ffcc;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 204, 0.3);
+            border-top-color: #00ffcc;
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 204, 0.3);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 204, 0.5);
+        }
+
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #ffc107;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .cube-container {
+                height: 350px;
+            }
+            
+            .cube {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .face {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .move-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel - 3D Visualization -->
+        <div class="panel">
+            <h2>🎲 3D Cube Visualization</h2>
+            
+            <div class="view-controls">
+                <button class="btn-icon" onclick="rotateCube('x')">Rotate X</button>
+                <button class="btn-icon" onclick="rotateCube('y')">Rotate Y</button>
+                <button class="btn-icon" onclick="resetView()">Reset View</button>
+            </div>
+
+            <div class="cube-container">
+                <div class="cube" id="cube3d">
+                    <div class="face front" data-face="F"></div>
+                    <div class="face back" data-face="B"></div>
+                    <div class="face right" data-face="R"></div>
+                    <div class="face left" data-face="L"></div>
+                    <div class="face top" data-face="U"></div>
+                    <div class="face bottom" data-face="D"></div>
+                </div>
+            </div>
+
+            <div class="manual-controls">
+                <h3>🎮 Manual Controls</h3>
+                <div class="move-grid">
+                    <button class="move-btn" onclick="executeMove('U')">U</button>
+                    <button class="move-btn" onclick="executeMove('U\'')">U'</button>
+                    <button class="move-btn" onclick="executeMove('U2')">U2</button>
+                    <button class="move-btn" onclick="executeMove('D')">D</button>
+                    <button class="move-btn" onclick="executeMove('D\'')">D'</button>
+                    <button class="move-btn" onclick="executeMove('D2')">D2</button>
+                    <button class="move-btn" onclick="executeMove('R')">R</button>
+                    <button class="move-btn" onclick="executeMove('R\'')">R'</button>
+                    <button class="move-btn" onclick="executeMove('R2')">R2</button>
+                    <button class="move-btn" onclick="executeMove('L')">L</button>
+                    <button class="move-btn" onclick="executeMove('L\'')">L'</button>
+                    <button class="move-btn" onclick="executeMove('L2')">L2</button>
+                    <button class="move-btn" onclick="executeMove('F')">F</button>
+                    <button class="move-btn" onclick="executeMove('F\'')">F'</button>
+                    <button class="move-btn" onclick="executeMove('F2')">F2</button>
+                    <button class="move-btn" onclick="executeMove('B')">B</button>
+                    <button class="move-btn" onclick="executeMove('B\'')">B'</button>
+                    <button class="move-btn" onclick="executeMove('B2')">B2</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Controls and Stats -->
+        <div class="panel">
+            <h2>⚡ Optimized Cube Solver</h2>
+            
+            <div class="algorithm-info">
+                <h4>🚀 Optimized Two-Phase Algorithm</h4>
+                <ul>
+                    <li><strong>Phase 1:</strong> Reach optimal subgroup state</li>
+                    <li><strong>Phase 2:</strong> Solve using reduced move set</li>
+                    <li><strong>Efficiency:</strong> Typically 18-25 moves</li>
+                    <li><strong>Speed:</strong> Sub-second solve time</li>
+                </ul>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="resetCube()">
+                    <span>🔄</span> Reset
+                </button>
+                <button class="btn btn-primary" id="solveBtn" onclick="solveCube()">
+                    <span>⚡</span> SOLVE
+                </button>
+            </div>
+
+            <h3>📊 Performance Metrics</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Moves</div>
+                    <div class="stat-value" id="totalMoves">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Solve Time</div>
+                    <div class="stat-value" id="solveTime">0ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Phase</div>
+                    <div class="stat-value" id="currentPhase" style="font-size: 18px;">Ready</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value" id="status" style="font-size: 18px;">Ready</div>
+                </div>
+            </div>
+
+            <h3>📋 Solution Steps</h3>
+            <div class="solution-panel">
+                <div class="solution-content" id="solutionContent">
+                    Use manual controls to set up a scrambled cube, then click SOLVE to find the optimal solution...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="cube-algorithm.js"></script>
+    <script>
+        // ========== GLOBAL VARIABLES ==========
+        const cube = new Cube();
+        const solver = new OptimizedSolver();
+        let isAnimating = false;
+        let rotationX = -25;
+        let rotationY = 45;
+
+        // ========== VISUALIZATION FUNCTIONS ==========
+        function updateVisual() {
+            const faces = ['front', 'back', 'right', 'left', 'top', 'bottom'];
+            const faceMap = {
+                'front': 'F', 'back': 'B', 'right': 'R',
+                'left': 'L', 'top': 'U', 'bottom': 'D'
+            };
+
+            faces.forEach(face => {
+                const faceElement = document.querySelector(`.face.${face}`);
+                const faceLetter = faceMap[face];
+                const colors = cube.state[faceLetter];
+
+                faceElement.innerHTML = '';
+                colors.forEach(color => {
+                    const sticker = document.createElement('div');
+                    sticker.className = `sticker ${color}`;
+                    faceElement.appendChild(sticker);
+                });
+            });
+
+            const solveBtn = document.getElementById('solveBtn');
+            const status = document.getElementById('status');
+            
+            if (cube.isSolved()) {
+                status.textContent = 'Solved!';
+                status.style.color = '#4caf50';
+                solveBtn.disabled = true;
+            } else {
+                status.textContent = 'Ready';
+                status.style.color = '#ff9800';
+                solveBtn.disabled = false;
+            }
+        }
+
+        // ========== CONTROL FUNCTIONS ==========
+        function executeMove(move) {
+            if (isAnimating) return;
+            cube.executeMove(move);
+            updateVisual();
+        }
+
+        function resetCube() {
+            if (isAnimating) return;
+            cube.reset();
+            updateVisual();
+            document.getElementById('totalMoves').textContent = '0';
+            document.getElementById('solveTime').textContent = '0ms';
+            document.getElementById('currentPhase').textContent = 'Ready';
+            document.getElementById('solutionContent').innerHTML = 'Use manual controls to set up a scrambled cube, then click SOLVE to find the optimal solution...';
+        }
+
+        async function solveCube() {
+            if (isAnimating || cube.isSolved()) return;
+            
+            isAnimating = true;
+            const cubeElement = document.getElementById('cube3d');
+            const solveBtn = document.getElementById('solveBtn');
+            
+            cubeElement.classList.add('solving');
+            solveBtn.disabled = true;
+            
+            document.getElementById('status').textContent = 'Solving...';
+            document.getElementById('currentPhase').textContent = 'Analyzing...';
+            document.getElementById('solutionContent').innerHTML = 
+                '<div class="loading"><div class="spinner"></div> Finding optimal solution...</div>';
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            try {
+                const startTime = performance.now();
+                const solution = await solver.solve(cube.copy());
+                const solveTime = performance.now() - startTime;
+                
+                if (solution.length === 0 && !cube.isSolved()) {
+                    throw new Error('Unable to find solution');
+                }
+                
+                document.getElementById('totalMoves').textContent = solution.length;
+                document.getElementById('solveTime').textContent = Math.round(solveTime) + 'ms';
+                document.getElementById('currentPhase').textContent = 'Executing...';
+                
+                let solutionHTML = '<div style="text-align: left;">';
+                solutionHTML += `<div class="phase-header">Solution Found (${solution.length} moves)</div>`;
+                solutionHTML += `<div class="moves-list">${solution.map((m, i) => 
+                    `<span class="move-tag" data-index="${i}">${m}</span>`).join('')}</div>`;
+                
+                if (solution.length === 0) {
+                    solutionHTML += '<div class="warning">Cube is already solved!</div>';
+                } else {
+                    const efficiency = Math.round((20 / solution.length) * 100);
+                    solutionHTML += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,204,0.1); border-radius: 10px;">
+                        <strong>Efficiency:</strong> ${efficiency}% of God's Number<br>
+                        <strong>Time:</strong> ${Math.round(solveTime)}ms
+                    </div>`;
+                }
+                
+                solutionHTML += '</div>';
+                document.getElementById('solutionContent').innerHTML = solutionHTML;
+                
+                for (let i = 0; i < solution.length; i++) {
+                    const move = solution[i];
+                    cube.executeMove(move);
+                    updateVisual();
+                    
+                    document.querySelectorAll('.move-tag').forEach(tag => tag.classList.remove('current'));
+                    const currentTag = document.querySelector(`[data-index="${i}"]`);
+                    if (currentTag) {
+                        currentTag.classList.add('current');
+                        currentTag.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                    
+                    const progress = Math.round((i + 1) / solution.length * 100);
+                    document.getElementById('currentPhase').textContent = `Progress: ${progress}%`;
+                    
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+                
+                document.getElementById('currentPhase').textContent = 'Complete!';
+                
+                if (!cube.isSolved()) {
+                    throw new Error('Solution verification failed');
+                }
+                
+            } catch (error) {
+                console.error('Solving error:', error);
+                document.getElementById('solutionContent').innerHTML = 
+                    `<div style="color: #ff6b6b; text-align: center;">
+                        <strong>Error</strong><br>
+                        ${error.message}
+                    </div>`;
+                document.getElementById('currentPhase').textContent = 'Error';
+            }
+            
+            cubeElement.classList.remove('solving');
+            isAnimating = false;
+            solveBtn.disabled = cube.isSolved();
+        }
+
+        function rotateCube(axis) {
+            const cube3d = document.getElementById('cube3d');
+            if (axis === 'x') {
+                rotationX += 90;
+            } else if (axis === 'y') {
+                rotationY += 90;
+            }
+            cube3d.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+        }
+
+        function resetView() {
+            rotationX = -25;
+            rotationY = 45;
+            const cube3d = document.getElementById('cube3d');
+            cube3d.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+        }
+
+        // ========== INITIALIZATION ==========
+        updateVisual();
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (isAnimating) return;
+            
+            const keyMap = {
+                'u': 'U', 'U': "U'",
+                'd': 'D', 'D': "D'",
+                'r': 'R', 'R': "R'",
+                'l': 'L', 'L': "L'",
+                'f': 'F', 'F': "F'",
+                'b': 'B', 'B': "B'"
+            };
+            
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                executeMove(keyMap[e.key]);
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                if (!cube.isSolved()) {
+                    solveCube();
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                resetCube();
+            }
+        });
+
+        // Mouse drag rotation
+        let isDragging = false;
+        let startX, startY;
+
+        const cubeContainer = document.querySelector('.cube-container');
+        
+        cubeContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            cubeContainer.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            rotationY += deltaX * 0.5;
+            rotationX -= deltaY * 0.5;
+            
+            const cube3d = document.getElementById('cube3d');
+            cube3d.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            cubeContainer.style.cursor = 'grab';
+        });
+
+        // Touch support
+        cubeContainer.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const deltaX = e.touches[0].clientX - startX;
+            const deltaY = e.touches[0].clientY - startY;
+            
+            rotationY += deltaX * 0.5;
+            rotationX -= deltaY * 0.5;
+            
+            const cube3d = document.getElementById('cube3d');
+            cube3d.style.transform = `rotateX(${rotationX}deg) rotateY(${rotationY}deg)`;
+            
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+
+        // Keyboard instructions
+        const instructionsHTML = `
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 204, 0.05); border-radius: 10px; border: 1px solid rgba(0, 255, 204, 0.2);">
+                <h4 style="color: #00ffcc; margin-bottom: 10px;">⌨️ Keyboard Shortcuts</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 14px; color: rgba(255, 255, 255, 0.8);">
+                    <div>• u/U - Up face CW/CCW</div>
+                    <div>• d/D - Down face CW/CCW</div>
+                    <div>• r/R - Right face CW/CCW</div>
+                    <div>• l/L - Left face CW/CCW</div>
+                    <div>• f/F - Front face CW/CCW</div>
+                    <div>• b/B - Back face CW/CCW</div>
+                    <div>• Space - Solve cube</div>
+                    <div>• Esc - Reset cube</div>
+                    <div>• Drag - Rotate view</div>
+                </div>
+            </div>
+        `;
+        
+        const rightPanel = document.querySelector('.panel:last-child');
+        rightPanel.insertAdjacentHTML('beforeend', instructionsHTML);
+
+        console.log('Optimized Rubik\'s Cube Solver initialized');
+        console.log('Algorithm: IDA* with Manhattan distance heuristic');
+        console.log('Expected performance: 18-25 moves typical');
+    </script>
+</body>
+</html>
