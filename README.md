@@ -2,7 +2,7 @@
 
 A modern, interactive 3D Rubik's Cube solver with an optimized two-phase algorithm implementation. Features a beautiful glassmorphism UI design and smooth animations.
 
-![App Screenshot]('/Users/amithkm/Desktop/rubiks-cube-solver/images/screenshot.png')
+('/Users/amithkm/Desktop/rubiks-cube-solver/images/screenshot.png')
 
 ## 🧠 Algorithm Overview
 
