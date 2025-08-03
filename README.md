@@ -2,7 +2,7 @@
 
 A modern, interactive 3D Rubik's Cube solver with an optimized two-phase algorithm implementation. Features a beautiful glassmorphism UI design and smooth animations.
 
-## 🚀 Features
+## Features
 
 - **3D Interactive Visualization**: Fully interactive 3D cube with smooth rotations and realistic sticker effects
 - **Optimized Solving Algorithm**: Two-phase algorithm with IDA* search and Manhattan distance heuristic
@@ -12,7 +12,7 @@ A modern, interactive 3D Rubik's Cube solver with an optimized two-phase algorit
 - **Responsive Design**: Works on desktop and mobile devices
 - **Modern UI**: Beautiful glassmorphism design with smooth animations
 
-## 🎯 Algorithm Details
+## Algorithm Details
 
 ### Two-Phase Algorithm
 - **Phase 1**: Reach optimal subgroup state using full move set
@@ -32,13 +32,13 @@ A modern, interactive 3D Rubik's Cube solver with an optimized two-phase algorit
 
 ```
 rubiks-cube-solver/
-├── visualization.html      # Main HTML file with UI and 3D visualization
+├── index.html      # Main HTML file with UI and 3D visualization
 ├── cube-algorithm.js      # Core cube logic and solving algorithms
 ├── run-instructions.md    # Detailed setup and running instructions
 └── README.md             # This file
 ```
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - Modern web browser (Chrome, Firefox, Safari, Edge)
@@ -47,7 +47,7 @@ rubiks-cube-solver/
 ### Quick Start
 
 1. **Download the files**:
-   - `visualization.html`
+   - `index.html`
    - `cube-algorithm.js`
 
 2. **Place both files in the same folder**
@@ -58,7 +58,7 @@ rubiks-cube-solver/
    ```bash
    python -m http.server 8000
    ```
-   Then open: `http://localhost:8000/visualization.html`
+   Then open: `http://localhost:8000/index.html`
 
    **Using Node.js:**
    ```bash
@@ -67,9 +67,9 @@ rubiks-cube-solver/
 
    **Using VS Code Live Server:**
    - Install Live Server extension
-   - Right-click `visualization.html` → "Open with Live Server"
+   - Right-click `index.html` → "Open with Live Server"
 
-4. **Alternative**: Double-click `visualization.html` (may have CORS limitations)
+4. **Alternative**: Double-click `index.html` (may have CORS limitations)
 
 ## 🎮 Controls
 
@@ -91,7 +91,7 @@ rubiks-cube-solver/
 - `U2` - Up face 180 degrees
 - Similar notation for D (Down), R (Right), L (Left), F (Front), B (Back)
 
-## 🎨 UI Features
+##  UI Features
 
 ### 3D Visualization
 - Realistic cube rendering with CSS 3D transforms
@@ -138,7 +138,7 @@ class OptimizedSolver {
 - **Visualization Engine**: 3D CSS transforms and animations
 - **UI Controller**: Event handling and user interaction
 
-## 📊 Performance Characteristics
+## Performance Characteristics
 
 ### Typical Results
 - **Move Count**: 18-25 moves average
@@ -151,7 +151,7 @@ class OptimizedSolver {
 - **Space Complexity**: O(d) for search depth
 - **Optimization**: Pruning reduces effective branching factor significantly
 
-## 🎯 Usage Examples
+## Usage Examples
 
 ### Basic Usage
 1. Use manual controls to scramble the cube
@@ -164,7 +164,7 @@ class OptimizedSolver {
 - Analyze solution efficiency compared to optimal
 - Study algorithm performance on different scramble types
 
-## 🛡️ Browser Compatibility
+## Browser Compatibility
 
 ### Fully Supported
 - Chrome 60+
@@ -178,14 +178,14 @@ class OptimizedSolver {
 - CSS Grid and Flexbox
 - Backdrop Filter (for glassmorphism effects)
 
-## 🚫 Removed Features
+## Removed Features
 
 This version has the shuffle button removed as requested. Users can scramble the cube using:
 - Manual controls (clicking face rotation buttons)
 - Keyboard shortcuts for individual moves
 - Direct manipulation via the control grid
 
-## 🔄 Development Notes
+## Development Notes
 
 ### Code Organization
 - **Separation of Concerns**: Algorithm logic separated from visualization
@@ -199,7 +199,7 @@ This version has the shuffle button removed as requested. Users can scramble the
 - Solution animation speed controls
 - Save/load cube states
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -225,7 +225,7 @@ Some browsers block local file access due to CORS policies. Always use a local w
 
 This project is provided as-is for educational and personal use. Feel free to modify and extend for your own projects.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - Based on the two-phase algorithm by Herbert Kociemba
 - 3D visualization inspired by modern web design trends
